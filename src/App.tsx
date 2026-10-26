@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 
 import { translations, Language } from './utils/translations';
+import { detectLanguageFromUrl, getPathWithLang, buildUrlWithLang } from './utils/urlLang';
 import { sounds } from './utils/sound';
 import { GameBoard } from './components/GameBoard';
 import { RoomHeader } from './components/RoomHeader';
@@ -51,9 +52,14 @@ import {
 export type GameMode = 'multiplayer' | 'solo-pass' | 'solo-bot';
 
 export default function App() {
-  // Localization & Theme Preferences (Default language: Odia 'or')
+  // Localization & Theme Preferences (Default language: Odia 'or', synced with /odia and /en in URL)
   const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
     try {
+      const urlLang = detectLanguageFromUrl(window.location.pathname, window.location.search);
+      if (urlLang) {
+        localStorage.setItem('sb_ttt_lang', urlLang);
+        return urlLang;
+      }
       const stored = localStorage.getItem('sb_ttt_lang');
       return (stored === 'en' ? 'en' : 'or') as Language;
     } catch {
@@ -165,10 +171,51 @@ export default function App() {
     return () => clearInterval(interval);
   }, [gameMode, gameState.matchStartTime, gameState.roundStartTime, gameState.status, gameState.round, gameState.roundHistory]);
 
+  // Keep URL path (/en or /odia) and HTML lang attribute in sync with currentLanguage
+  useEffect(() => {
+    document.documentElement.lang = currentLanguage;
+    try {
+      const targetPath = getPathWithLang(window.location.pathname, currentLanguage);
+      if (window.location.pathname !== targetPath) {
+        const nextUrl = buildUrlWithLang(
+          window.location.pathname,
+          window.location.search,
+          window.location.hash,
+          currentLanguage
+        );
+        window.history.replaceState({}, '', nextUrl);
+      }
+    } catch {}
+  }, [currentLanguage]);
+
+  // Listen for browser back/forward navigation between /en and /odia
+  useEffect(() => {
+    const handlePopState = () => {
+      const urlLang = detectLanguageFromUrl(window.location.pathname, window.location.search);
+      if (urlLang) {
+        setCurrentLanguage(urlLang);
+        try {
+          localStorage.setItem('sb_ttt_lang', urlLang);
+        } catch {}
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   const handleSelectLanguage = (lang: Language) => {
     setCurrentLanguage(lang);
     try {
       localStorage.setItem('sb_ttt_lang', lang);
+      const nextUrl = buildUrlWithLang(
+        window.location.pathname,
+        window.location.search,
+        window.location.hash,
+        lang
+      );
+      if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== nextUrl) {
+        window.history.pushState({}, '', nextUrl);
+      }
     } catch {}
   };
 
@@ -419,7 +466,7 @@ export default function App() {
     setCurrentRoomCode(null);
     setGameMode(null);
     setConnectionStatus('disconnected');
-    const cleanUrl = window.location.pathname;
+    const cleanUrl = getPathWithLang(window.location.pathname, currentLanguage);
     window.history.replaceState({}, '', cleanUrl);
   };
 
@@ -472,7 +519,8 @@ export default function App() {
   // Copy share invite link
   const handleCopyLink = () => {
     if (!currentRoomCode) return;
-    const url = `${window.location.origin}${window.location.pathname}?room=${currentRoomCode}`;
+    const langPath = getPathWithLang(window.location.pathname, currentLanguage);
+    const url = `${window.location.origin}${langPath}?room=${currentRoomCode}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedLink(true);
       sounds.playClick();

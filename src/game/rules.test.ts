@@ -130,3 +130,26 @@ test('getBestBotMove takes winning move or blocks opponent', () => {
   assert.ok([1, 3, 5, 7].includes(botDefenseMove), `Bot should pick an edge (1,3,5,7) to counter corner fork, got ${botDefenseMove}`);
 });
 
+import { detectLanguageFromUrl, getPathWithLang, buildUrlWithLang } from '../utils/urlLang.ts';
+
+test('detectLanguageFromUrl and getPathWithLang handle /en and /odia URLs accurately', () => {
+  assert.equal(detectLanguageFromUrl('/en'), 'en');
+  assert.equal(detectLanguageFromUrl('/en/'), 'en');
+  assert.equal(detectLanguageFromUrl('/odia'), 'or');
+  assert.equal(detectLanguageFromUrl('/odia/'), 'or');
+  assert.equal(detectLanguageFromUrl('/webrtc-tictactoe/en'), 'en');
+  assert.equal(detectLanguageFromUrl('/webrtc-tictactoe/odia'), 'or');
+  assert.equal(detectLanguageFromUrl('/'), null);
+
+  assert.equal(getPathWithLang('/', 'or'), '/odia');
+  assert.equal(getPathWithLang('/', 'en'), '/en');
+  assert.equal(getPathWithLang('/odia', 'en'), '/en');
+  assert.equal(getPathWithLang('/en', 'or'), '/odia');
+  assert.equal(getPathWithLang('/webrtc-tictactoe/', 'or'), '/webrtc-tictactoe/odia');
+  assert.equal(getPathWithLang('/webrtc-tictactoe/odia', 'en'), '/webrtc-tictactoe/en');
+
+  assert.equal(buildUrlWithLang('/odia', '?room=SB7A9K', '', 'en'), '/en?room=SB7A9K');
+  assert.equal(buildUrlWithLang('/en', '?room=SB7A9K', '', 'or'), '/odia?room=SB7A9K');
+});
+
+
