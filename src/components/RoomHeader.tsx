@@ -139,8 +139,8 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
             sounds.playClick();
             onToggleLanguage();
           }}
-          aria-label="Toggle Language"
-          title={`Language: ${currentLanguage === 'en' ? 'English' : 'ଓଡ଼ିଆ'}`}
+          aria-label={currentLanguage === 'or' ? 'Switch to English' : 'Switch to Odia'}
+          title={currentLanguage === 'or' ? 'Switch to English' : 'Switch to Odia (ଓଡ଼ିଆ)'}
           className={`flex items-center gap-1 px-2.5 py-1.5 rounded-xl border text-xs font-semibold transition-colors ${
             isDarkMode
               ? 'border-slate-800 text-slate-300 hover:bg-slate-800'
@@ -148,7 +148,7 @@ export const RoomHeader: React.FC<RoomHeaderProps> = ({
           }`}
         >
           <Globe className="w-3.5 h-3.5 text-indigo-500" />
-          <span>{currentLanguage === 'en' ? 'EN' : 'ଓଡ଼ିଆ'}</span>
+          <span>{currentLanguage === 'or' ? 'EN' : 'ଓଡ଼ିଆ'}</span>
         </button>
 
         {/* Sound toggle button */}
