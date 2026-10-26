@@ -1,0 +1,6 @@
+{
+  "name": "Chhaki Suna (ଛକି ଶୂନ) – Free Tic Tac Toe Online Multiplayer & Solo Game",
+  "description": "Play Chhaki Suna (ଛକି ଶୂନ) – Free Tic Tac Toe online multiplayer & solo game! Join rooms with SBXXXX code, share invite links, watch live as spectator, or play solo vs unbeatable AI & 2-player pass-and-play in Odia (ଓଡ଼ିଆ) and English. Created by Sandeep Biswal G.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
