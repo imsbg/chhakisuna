@@ -57,6 +57,7 @@ export type NetworkMessage =
   | { type: 'REMATCH_ACCEPT'; round: number }
   | { type: 'REACTION'; emoji: string; sender: string }
   | { type: 'PLAYER_LEAVE'; peerId: string }
+  | { type: 'HOST_LEFT'; roomCode: string }
   | { type: 'PING' };
 
 export interface NetworkCallbacks {
@@ -65,6 +66,7 @@ export interface NetworkCallbacks {
   onConnectionStatusChange: (status: 'connected' | 'connecting' | 'disconnected', error?: string) => void;
   onReactionReceived: (emoji: string, sender: string) => void;
   onNotification?: (message: string) => void;
+  onHostLeft?: () => void;
 }
 
 export class WebRTCNetworkRoom {
@@ -82,6 +84,7 @@ export class WebRTCNetworkRoom {
   private isDestroyed: boolean = false;
   private hostConnection: DataConnection | null = null;
   private joinAccepted: boolean = false;
+  private hostLeftNotified: boolean = false;
   private joinRetryInterval: ReturnType<typeof setInterval> | null = null;
   private liveAnnounceInterval: ReturnType<typeof setInterval> | null = null;
   private lastActivityAt: number = Date.now();
@@ -315,9 +318,10 @@ export class WebRTCNetworkRoom {
           return;
         }
       } else if (err.type === 'peer-unavailable') {
-        // Host peer does not exist anymore (room closed/left) -> purge from Live Matches
+        // Host peer does not exist anymore (room closed/left) -> purge from Live Matches and notify spectator/guest
         if (this.myRole !== 'host') {
-          liveMatchRegistry.removeRoom(this.roomCode);
+          this.notifyHostLeft();
+          return;
         }
       }
       this.callbacks.onConnectionStatusChange('connecting', err.message);
@@ -328,6 +332,20 @@ export class WebRTCNetworkRoom {
         this.peer?.reconnect();
       }
     });
+  }
+
+  private notifyHostLeft() {
+    if (this.myRole === 'host' || this.isDestroyed) return;
+    liveMatchRegistry.removeRoom(this.roomCode);
+    if (this.joinRetryInterval) {
+      clearInterval(this.joinRetryInterval);
+      this.joinRetryInterval = null;
+    }
+    this.callbacks.onConnectionStatusChange('disconnected', 'Host left the room');
+    if (!this.hostLeftNotified) {
+      this.hostLeftNotified = true;
+      this.callbacks.onHostLeft?.();
+    }
   }
 
   private connectToHost() {
@@ -348,8 +366,7 @@ export class WebRTCNetworkRoom {
 
     conn.on('close', () => {
       this.connections.delete(conn.peer);
-      liveMatchRegistry.removeRoom(this.roomCode);
-      this.callbacks.onConnectionStatusChange('disconnected', 'Host disconnected');
+      this.notifyHostLeft();
     });
 
     conn.on('error', () => {
@@ -484,6 +501,13 @@ export class WebRTCNetworkRoom {
 
       case 'PLAYER_LEAVE': {
         this.removeDisconnectedPeer(msg.peerId);
+        break;
+      }
+
+      case 'HOST_LEFT': {
+        if (msg.roomCode === this.roomCode && this.myRole !== 'host') {
+          this.notifyHostLeft();
+        }
         break;
       }
 
@@ -739,6 +763,7 @@ export class WebRTCNetworkRoom {
     }
     if (this.myRole === 'host') {
       liveMatchRegistry.removeRoom(this.roomCode);
+      this.broadcast({ type: 'HOST_LEFT', roomCode: this.roomCode });
     } else {
       this.sendToHost({ type: 'PLAYER_LEAVE', peerId: this.myId });
     }

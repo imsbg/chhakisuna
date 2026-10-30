@@ -23,10 +23,17 @@ import {
   LogOut,
   Radio,
   Clock,
+  AlertTriangle,
 } from 'lucide-react';
 
 import { translations, Language } from './utils/translations';
-import { detectLanguageFromUrl, getPathWithLang, buildUrlWithLang } from './utils/urlLang';
+import {
+  detectLanguageFromUrl,
+  detectPageFromUrl,
+  getPathWithLang,
+  buildUrlWithLang,
+  AppPage,
+} from './utils/urlLang';
 import { sounds } from './utils/sound';
 import { GameBoard } from './components/GameBoard';
 import { RoomHeader } from './components/RoomHeader';
@@ -35,6 +42,8 @@ import { SettingsModal } from './components/SettingsModal';
 import { PromoBanner } from './components/PromoBanner';
 import { QrModal } from './components/QrModal';
 import { JoinInviteModal } from './components/JoinInviteModal';
+import { ShareFriendModal } from './components/ShareFriendModal';
+import { TermsPage } from './components/TermsPage';
 import { ReactionFloater, FloatingItem } from './components/ReactionFloater';
 import { GameDataFooter } from './components/GameDataFooter';
 import { WebRTCNetworkRoom, GameState, UserRole } from './network/webrtc';
@@ -86,6 +95,15 @@ export default function App() {
     }
   });
 
+  // Current Route Page: 'home' (/odia or /en) or 'terms' (/odia/terms or /en/terms)
+  const [currentPage, setCurrentPage] = useState<AppPage>(() => {
+    try {
+      return detectPageFromUrl(window.location.pathname);
+    } catch {
+      return 'home';
+    }
+  });
+
   // Game Mode State: null = Lobby, 'multiplayer', 'solo-pass', 'solo-bot'
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
 
@@ -93,6 +111,7 @@ export default function App() {
   const [currentRoomCode, setCurrentRoomCode] = useState<string | null>(null);
   const [myRole, setMyRole] = useState<UserRole>('host');
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'connecting' | 'disconnected'>('disconnected');
+  const [hostLeftRoom, setHostLeftRoom] = useState<boolean>(false);
 
   // Shared Link Invite Modal State
   const [inviteRoomCode, setInviteRoomCode] = useState<string | null>(null);
@@ -125,11 +144,15 @@ export default function App() {
   // Modals & Floating Reactions
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isQrOpen, setIsQrOpen] = useState(false);
+  const [isShareFriendOpen, setIsShareFriendOpen] = useState(false);
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeReactions, setActiveReactions] = useState<FloatingItem[]>([]);
   const [copiedLink, setCopiedLink] = useState(false);
 
   const networkRoomRef = useRef<WebRTCNetworkRoom | null>(null);
+  const langRef = useRef<Language>(currentLanguage);
+  langRef.current = currentLanguage;
   const t = translations[currentLanguage];
 
   // Apply dark mode class to root HTML
@@ -171,27 +194,45 @@ export default function App() {
     return () => clearInterval(interval);
   }, [gameMode, gameState.matchStartTime, gameState.roundStartTime, gameState.status, gameState.round, gameState.roundHistory]);
 
-  // Keep URL path (/en or /odia) and HTML lang attribute in sync with currentLanguage
+  // Keep URL path (/en, /odia, /en/terms, /odia/terms), HTML lang, and SEO canonical/meta tags in sync
   useEffect(() => {
     document.documentElement.lang = currentLanguage;
     try {
-      const targetPath = getPathWithLang(window.location.pathname, currentLanguage);
+      const targetPath = getPathWithLang(window.location.pathname, currentLanguage, currentPage);
       if (window.location.pathname !== targetPath) {
         const nextUrl = buildUrlWithLang(
           window.location.pathname,
-          window.location.search,
+          currentPage === 'terms' ? '' : window.location.search,
           window.location.hash,
-          currentLanguage
+          currentLanguage,
+          currentPage
         );
         window.history.replaceState({}, '', nextUrl);
       }
-    } catch {}
-  }, [currentLanguage]);
 
-  // Listen for browser back/forward navigation between /en and /odia
+      // Dynamically sync canonical link and OpenGraph URL for SEO ranking
+      const canonicalHref = `https://chhakisuna.netlify.app${targetPath}`;
+      const canonicalEl = document.querySelector('link[rel="canonical"]');
+      if (canonicalEl) canonicalEl.setAttribute('href', canonicalHref);
+      const ogUrlEl = document.querySelector('meta[property="og:url"]');
+      if (ogUrlEl) ogUrlEl.setAttribute('content', canonicalHref);
+      const twitterUrlEl = document.querySelector('meta[name="twitter:url"]');
+      if (twitterUrlEl) twitterUrlEl.setAttribute('content', canonicalHref);
+
+      // Keep document.title aligned with active language
+      document.title =
+        currentLanguage === 'en'
+          ? 'Tic Tac Toe – Free Online Multiplayer & Solo Game'
+          : 'ଛକି ଶୂନ (Chhaki Suna) – Play Free Tic Tac Toe Multiplayer & Solo Online';
+    } catch {}
+  }, [currentLanguage, currentPage]);
+
+  // Listen for browser back/forward navigation between /en, /odia, /en/terms, and /odia/terms
   useEffect(() => {
     const handlePopState = () => {
       const urlLang = detectLanguageFromUrl(window.location.pathname, window.location.search);
+      const urlPage = detectPageFromUrl(window.location.pathname);
+      setCurrentPage(urlPage);
       if (urlLang) {
         setCurrentLanguage(urlLang);
         try {
@@ -203,19 +244,68 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
+  // Prevent accidental page refresh (F5 / Ctrl+R / Cmd+R) & prompt before closing/refreshing during an active match
+  useEffect(() => {
+    if (!gameMode) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isF5 = e.key === 'F5';
+      const isCtrlOrCmdR = (e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'r';
+      if (isF5 || isCtrlOrCmdR) {
+        e.preventDefault();
+        e.stopPropagation();
+        const msg = translations[langRef.current].refreshDisabledNotice;
+        setToastMessage(msg);
+        setTimeout(() => setToastMessage(null), 3200);
+      }
+    };
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      const msg = translations[langRef.current].refreshDisabledNotice;
+      e.preventDefault();
+      e.returnValue = msg;
+      return msg;
+    };
+
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [gameMode]);
+
   const handleSelectLanguage = (lang: Language) => {
     setCurrentLanguage(lang);
     try {
       localStorage.setItem('sb_ttt_lang', lang);
       const nextUrl = buildUrlWithLang(
         window.location.pathname,
-        window.location.search,
+        currentPage === 'terms' ? '' : window.location.search,
         window.location.hash,
-        lang
+        lang,
+        currentPage
       );
       if (`${window.location.pathname}${window.location.search}${window.location.hash}` !== nextUrl) {
         window.history.pushState({}, '', nextUrl);
       }
+    } catch {}
+  };
+
+  const handleNavigatePage = (page: AppPage) => {
+    setCurrentPage(page);
+    try {
+      const nextUrl = buildUrlWithLang(
+        window.location.pathname,
+        page === 'terms' ? '' : window.location.search,
+        '',
+        currentLanguage,
+        page
+      );
+      if (`${window.location.pathname}${window.location.search}` !== nextUrl) {
+        window.history.pushState({}, '', nextUrl);
+      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } catch {}
   };
 
@@ -372,6 +462,8 @@ export default function App() {
   // Create Multiplayer Room (Host)
   const createRoom = useCallback((code: string, isPublicLive: boolean = true) => {
     networkRoomRef.current?.destroy();
+    setCurrentPage('home');
+    setHostLeftRoom(false);
     setGameMode('multiplayer');
     setCurrentRoomCode(code);
     setMyRole('host');
@@ -401,6 +493,8 @@ export default function App() {
     if (customName) {
       handleUpdatePlayerName(finalName);
     }
+    setCurrentPage('home');
+    setHostLeftRoom(false);
     setGameMode('multiplayer');
     setCurrentRoomCode(code);
     setMyRole(role);
@@ -415,6 +509,11 @@ export default function App() {
       onConnectionStatusChange: (status) => setConnectionStatus(status),
       onReactionReceived: (emoji, sender) => triggerFloatingReaction(emoji, sender),
       onNotification: (msg) => showToast(msg),
+      onHostLeft: () => {
+        setHostLeftRoom(true);
+        sounds.playDraw();
+        showToast(translations[langRef.current].hostLeftNotice);
+      },
     });
 
     networkRoomRef.current = room;
@@ -425,6 +524,8 @@ export default function App() {
   const handleStartSolo = (mode: 'pass' | 'bot', customPlayer2Name?: string) => {
     networkRoomRef.current?.destroy();
     networkRoomRef.current = null;
+    setCurrentPage('home');
+    setHostLeftRoom(false);
     setCurrentRoomCode(null);
     setGameMode(mode === 'pass' ? 'solo-pass' : 'solo-bot');
     setMyRole('host');
@@ -456,8 +557,15 @@ export default function App() {
     });
   };
 
+  // Request confirmation before leaving active game
+  const handleRequestLeaveGame = () => {
+    sounds.playClick();
+    setIsLeaveConfirmOpen(true);
+  };
+
   // Leave active game & return to lobby
   const handleLeaveGame = () => {
+    setIsLeaveConfirmOpen(false);
     if (currentRoomCode && myRole === 'host') {
       liveMatchRegistry.removeRoom(currentRoomCode);
     }
@@ -465,8 +573,9 @@ export default function App() {
     networkRoomRef.current = null;
     setCurrentRoomCode(null);
     setGameMode(null);
+    setHostLeftRoom(false);
     setConnectionStatus('disconnected');
-    const cleanUrl = getPathWithLang(window.location.pathname, currentLanguage);
+    const cleanUrl = getPathWithLang(window.location.pathname, currentLanguage, 'home');
     window.history.replaceState({}, '', cleanUrl);
   };
 
@@ -587,13 +696,30 @@ export default function App() {
         onToggleLanguage={() => handleSelectLanguage(currentLanguage === 'en' ? 'or' : 'en')}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenQr={() => setIsQrOpen(true)}
-        onLeaveRoom={gameMode !== null ? handleLeaveGame : undefined}
+        onOpenShareFriend={() => setIsShareFriendOpen(true)}
+        onOpenTerms={() => handleNavigatePage('terms')}
+        onLogoClick={() => {
+          if (currentPage === 'terms') {
+            handleNavigatePage('home');
+          }
+        }}
+        onLeaveRoom={gameMode !== null ? handleRequestLeaveGame : undefined}
         t={t}
       />
 
       {/* Main Container */}
-      <main className="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 py-4 w-full max-w-6xl mx-auto">
-        {!gameMode ? (
+      <main
+        className={`flex-1 flex flex-col ${
+          currentPage === 'terms' ? 'justify-start' : 'justify-center'
+        } items-center px-4 sm:px-6 py-4 w-full max-w-6xl mx-auto`}
+      >
+        {currentPage === 'terms' ? (
+          <TermsPage
+            t={t}
+            isDarkMode={isDarkMode}
+            onBackToGame={() => handleNavigatePage('home')}
+          />
+        ) : !gameMode ? (
           /* Lobby: Choose Solo, Create/Join Room, or See Live Matches */
           <RoomLobby
             playerName={playerName}
@@ -601,6 +727,8 @@ export default function App() {
             onCreateRoom={createRoom}
             onJoinRoom={(code, role) => joinRoom(code, role)}
             onStartSolo={handleStartSolo}
+            onOpenShareFriend={() => setIsShareFriendOpen(true)}
+            onOpenTerms={() => handleNavigatePage('terms')}
             t={t}
             isDarkMode={isDarkMode}
           />
@@ -632,6 +760,22 @@ export default function App() {
 
               {/* DETAILS & MOVE COLUMN: Order 1 on Mobile (at top), Order 2 on Desktop (right side) */}
               <div className="order-1 lg:order-2 lg:col-span-6 space-y-3.5">
+                {/* Room Creator Left Notification Banner for Spectators & Guests */}
+                {gameMode === 'multiplayer' && hostLeftRoom && (
+                  <div
+                    role="alert"
+                    className="p-4 rounded-2xl border border-rose-500/40 bg-rose-500/15 text-rose-400 shadow-lg space-y-2 animate-pop-in"
+                  >
+                    <div className="flex items-center gap-2 font-extrabold text-sm text-rose-400">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <span>{t.hostLeftBannerTitle}</span>
+                    </div>
+                    <p className="text-xs text-rose-300/90 leading-relaxed">
+                      {t.hostLeftBannerDesc}
+                    </p>
+                  </div>
+                )}
+
                 {/* Top Info Banner: Room Code / Solo Badge */}
                 <div
                   className={`p-3.5 sm:p-4 rounded-2xl border shadow-md flex items-center justify-between ${
@@ -667,30 +811,30 @@ export default function App() {
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"
-                        onClick={handleCopyLink}
-                        title={t.copyLink}
-                        aria-label={t.copyLink}
+                        onClick={() => {
+                          sounds.playClick();
+                          setIsShareFriendOpen(true);
+                        }}
+                        title={t.shareWithFriend}
+                        aria-label={t.shareWithFriend}
                         className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
                       >
-                        {copiedLink ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-300" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                        <span>{copiedLink ? t.copied : t.copyLink}</span>
+                        <Share2 className="w-3.5 h-3.5" />
+                        <span>{t.shareWithFriend}</span>
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => {
-                          sounds.playClick();
-                          setIsQrOpen(true);
-                        }}
-                        title={t.scanQr}
-                        aria-label={t.scanQr}
+                        onClick={handleCopyLink}
+                        title={t.copyLink}
+                        aria-label={t.copyLink}
                         className="p-2 rounded-xl border border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 transition-colors"
                       >
-                        <Share2 className="w-3.5 h-3.5" />
+                        {copiedLink ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
                       </button>
                     </div>
                   )}
@@ -885,7 +1029,7 @@ export default function App() {
                 {/* Back to Lobby Button */}
                 <button
                   type="button"
-                  onClick={handleLeaveGame}
+                  onClick={handleRequestLeaveGame}
                   className="w-full py-2.5 rounded-xl border border-slate-700/60 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -955,6 +1099,75 @@ export default function App() {
           isDarkMode={isDarkMode}
           t={t}
         />
+      )}
+
+      {/* Share with a Friend Modal (Asks ଓଡ଼ିଆ or English) */}
+      <ShareFriendModal
+        isOpen={isShareFriendOpen}
+        onClose={() => setIsShareFriendOpen(false)}
+        currentLanguage={currentLanguage}
+        roomCode={currentRoomCode}
+        isDarkMode={isDarkMode}
+        t={t}
+        onCopiedToast={(msg) => showToast(msg)}
+      />
+
+      {/* Leave Room Confirmation Modal */}
+      {isLeaveConfirmOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="leave-confirm-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in"
+        >
+          <div
+            className={`w-full max-w-sm rounded-3xl border shadow-2xl p-6 text-center space-y-4 transition-all animate-pop-in ${
+              isDarkMode
+                ? 'bg-slate-900 border-slate-800 text-slate-100'
+                : 'bg-white border-slate-200 text-slate-900'
+            }`}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center mx-auto">
+              <LogOut className="w-6 h-6" />
+            </div>
+
+            <div className="space-y-1.5">
+              <h3 id="leave-confirm-title" className="text-lg font-extrabold tracking-tight">
+                {t.leaveConfirmTitle}
+              </h3>
+              <p className="text-xs text-slate-400 leading-relaxed">{t.leaveConfirmDesc}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  setIsLeaveConfirmOpen(false);
+                }}
+                className={`py-2.5 px-4 rounded-xl border font-bold text-xs transition-all active:scale-95 ${
+                  isDarkMode
+                    ? 'border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700'
+                    : 'border-slate-200 bg-slate-100 text-slate-700 hover:bg-slate-200'
+                }`}
+              >
+                {t.leaveConfirmCancel}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  handleLeaveGame();
+                }}
+                className="py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow-md shadow-rose-600/25 transition-all active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>{t.leaveConfirmYes}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast Notification */}

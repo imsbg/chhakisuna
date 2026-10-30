@@ -115,13 +115,48 @@ export interface Translations {
   openForPlayer: string;
   matchInProgress: string;
   phoneCacheBadge: string;
+  // Room Creator Left & Refresh Prevention
+  hostLeftNotice: string;
+  hostLeftBannerTitle: string;
+  hostLeftBannerDesc: string;
+  refreshDisabledNotice: string;
+  // Share with a Friend (Language Selector)
+  shareWithFriend: string;
+  shareLanguagePromptTitle: string;
+  shareLanguagePromptSubtitle: string;
+  shareViaWhatsApp: string;
+  shareViaSystem: string;
+  copyShareMessage: string;
+  messageCopied: string;
+  // Terms & Conditions / Privacy Page
+  termsAndPrivacy: string;
+  backToGame: string;
+  termsPageTitle: string;
+  termsPageSubtitle: string;
+  termsNoDataTitle: string;
+  termsNoDataDesc: string;
+  termsWebrtcTitle: string;
+  termsWebrtcDesc: string;
+  termsLocalStorageTitle: string;
+  termsLocalStorageDesc: string;
+  termsFairPlayTitle: string;
+  termsFairPlayDesc: string;
+  moreAppsTitle: string;
+  moreAppsDesc: string;
+  downloadMoreAppsBtn: string;
+  // Leave Room Confirmation & Mobile Menu
+  leaveConfirmTitle: string;
+  leaveConfirmDesc: string;
+  leaveConfirmYes: string;
+  leaveConfirmCancel: string;
+  menuLabel: string;
 }
 
 export const translations: Record<Language, Translations> = {
   en: {
-    appTitle: 'Chhaki Suna',
-    appSubtitle: 'Play Chhaki Suna (Tic Tac Toe) Online with SBXXXX Rooms or Solo',
-    heroBadge: 'Chhaki Suna • Online & Solo Game',
+    appTitle: 'Tic Tac Toe',
+    appSubtitle: 'Play Tic Tac Toe Online with SBXXXX Rooms or Solo',
+    heroBadge: 'Tic Tac Toe • Online & Solo Game',
     p2pRoomSubtitle: 'Online Multiplayer Room',
     roomCode: 'Room Code',
     createRoom: 'Create Room',
@@ -226,6 +261,37 @@ export const translations: Record<Language, Translations> = {
     openForPlayer: 'Waiting for Player O',
     matchInProgress: 'Live Match',
     phoneCacheBadge: 'Live Matches',
+    hostLeftNotice: 'The room creator has left the room. Match ended.',
+    hostLeftBannerTitle: 'Room Creator Left the Room',
+    hostLeftBannerDesc: 'The host has closed or left this room, so the live connection has ended.',
+    refreshDisabledNotice: 'Page refresh is disabled during an active match to protect your game!',
+    shareWithFriend: 'Share with a Friend',
+    shareLanguagePromptTitle: 'In which language do you want to send the message?',
+    shareLanguagePromptSubtitle: 'Choose your preferred language for the invitation message and link:',
+    shareViaWhatsApp: 'Send on WhatsApp',
+    shareViaSystem: 'Share via Apps',
+    copyShareMessage: 'Copy Message',
+    messageCopied: 'Invitation message copied!',
+    termsAndPrivacy: 'Terms & Conditions',
+    backToGame: 'Back to Game',
+    termsPageTitle: 'Terms & Conditions and Privacy Policy',
+    termsPageSubtitle: 'Zero data collection • Direct WebRTC Peer-to-Peer gameplay',
+    termsNoDataTitle: '1. Zero Data Collection & Complete Privacy',
+    termsNoDataDesc: 'Tic Tac Toe does not collect, store, track, or sell any personal data, user accounts, IP addresses, or analytics on any external database or server. You can play freely without registration or login.',
+    termsWebrtcTitle: '2. How Online Multiplayer Works (WebRTC Technology)',
+    termsWebrtcDesc: 'Online rooms (SBXXXX) and live spectator streams operate directly between players browsers using WebRTC peer-to-peer data channels. Game moves, scores, and emoji reactions are transmitted directly between connected devices in real time and are automatically cleared as soon as the room closes.',
+    termsLocalStorageTitle: '3. Local Device Preferences Only',
+    termsLocalStorageDesc: 'Your chosen display name, theme preference (dark or light), language selection, and sound settings are saved strictly inside your own browser local storage on your device so you do not have to re-enter them.',
+    termsFairPlayTitle: '4. Free Access & Fair Play',
+    termsFairPlayDesc: 'This game is completely free for everyone to play solo or with friends. Inactive public rooms with no movement or reaction for 2 minutes are automatically removed from the live match list.',
+    moreAppsTitle: 'Explore & Download More Apps',
+    moreAppsDesc: 'Check out more useful Odia and utility applications created by Sandeep Biswal G on Google Play Store.',
+    downloadMoreAppsBtn: 'Download More Apps on Google Play',
+    leaveConfirmTitle: 'Leave Match?',
+    leaveConfirmDesc: 'Are you sure you want to leave this match and return to the home screen?',
+    leaveConfirmYes: 'Yes, Leave',
+    leaveConfirmCancel: 'Stay in Match',
+    menuLabel: 'Menu',
   },
   or: {
     appTitle: 'ଛକି ଶୂନ',
@@ -335,6 +401,37 @@ export const translations: Record<Language, Translations> = {
     openForPlayer: 'ପ୍ରତିଦ୍ୱନ୍ଦ୍ୱୀଙ୍କୁ ଅପେକ୍ଷା',
     matchInProgress: 'ଲାଇଭ୍ ଖେଳ ଚାଲିଛି',
     phoneCacheBadge: 'ଲାଇଭ୍ ଖେଳ',
+    hostLeftNotice: 'କୋଠରି ନିର୍ମାତା କୋଠରି ଛାଡ଼ି ଚାଲିଯାଇଛନ୍ତି। ଖେଳ ସମାପ୍ତ ହୋଇଛି।',
+    hostLeftBannerTitle: 'କୋଠରି ନିର୍ମାତା କୋଠରି ଛାଡ଼ି ଚାଲିଯାଇଛନ୍ତି',
+    hostLeftBannerDesc: 'ଏହି କୋଠରିର ନିର୍ମାତା କୋଠରି ବନ୍ଦ କରିଦେଇଛନ୍ତି କିମ୍ବା ବାହାରି ଯାଇଛନ୍ତି, ତେଣୁ ଲାଇଭ୍ ସଂଯୋଗ ସମାପ୍ତ ହୋଇଛି।',
+    refreshDisabledNotice: 'ଖେଳ ଚାଲିଥିବା ସମୟରେ ପୃଷ୍ଠା ରିଫ୍ରେସ୍ କରିବା ବନ୍ଦ କରାଯାଇଛି!',
+    shareWithFriend: 'ସାଙ୍ଗମାନଙ୍କ ସହ ସେୟାର୍ କରନ୍ତୁ',
+    shareLanguagePromptTitle: 'ଆପଣ କେଉଁ ଭାଷାରେ ବାର୍ତ୍ତା ପଠାଇବାକୁ ଚାହୁଁଛନ୍ତି?',
+    shareLanguagePromptSubtitle: 'ଆପଣଙ୍କ ସାଙ୍ଗଙ୍କୁ ନିମନ୍ତ୍ରଣ ବାର୍ତ୍ତା ପଠାଇବା ପାଇଁ ଭାଷା ବାଛନ୍ତୁ:',
+    shareViaWhatsApp: 'ହ୍ୱାଟ୍ସଆପ୍ ରେ ପଠାନ୍ତୁ',
+    shareViaSystem: 'ଅନ୍ୟ ଆପ୍ ମାଧ୍ୟମରେ ପଠାନ୍ତୁ',
+    copyShareMessage: 'ବାର୍ତ୍ତା କପି କରନ୍ତୁ',
+    messageCopied: 'ନିମନ୍ତ୍ରଣ ବାର୍ତ୍ତା କପି ହୋଇଗଲା!',
+    termsAndPrivacy: 'ନିୟମ ଓ ସର୍ତ୍ତାବଳୀ',
+    backToGame: 'ଖେଳକୁ ଫେରନ୍ତୁ',
+    termsPageTitle: 'ନିୟମ, ସର୍ତ୍ତାବଳୀ ଏବଂ ଗୋପନୀୟତା ନୀତି',
+    termsPageSubtitle: 'କୌଣସି ତଥ୍ୟ ସଂଗ୍ରହ ନାହିଁ • ସିଧାସଳଖ ୱେବ୍-ଆରଟିସି ସଂଯୋଗ ଦ୍ୱାରା ଖେଳ',
+    termsNoDataTitle: '୧. କୌଣସି ବ୍ୟକ୍ତିଗତ ତଥ୍ୟ ସଂଗ୍ରହ କରାଯାଏ ନାହିଁ',
+    termsNoDataDesc: 'ଛକି ଶୂନ ୱେବସାଇଟ୍ ଆପଣଙ୍କର କୌଣସି ବ୍ୟକ୍ତିଗତ ତଥ୍ୟ, ଫୋନ୍ ନମ୍ବର, ଇମେଲ୍ କିମ୍ବା ଅନ୍ୟ କୌଣସି ସୂଚନା କୌଣସି ସର୍ଭରରେ ସଂଗ୍ରହ କିମ୍ବା ସଂରକ୍ଷଣ କରେ ନାହିଁ। ଆପଣ ବିନା କୌଣସି ପଞ୍ଜୀକରଣ କିମ୍ବା ଲଗଇନ୍ ରେ ସମ୍ପୂର୍ଣ୍ଣ ସୁରକ୍ଷିତ ଭାବେ ଏହି ଖେଳ ଖେଳିପାରିବେ।',
+    termsWebrtcTitle: '୨. ଅନଲାଇନ୍ ଖେଳ କିପରି କାର୍ଯ୍ୟ କରେ (ୱେବ୍-ଆରଟିସି ପ୍ରଯୁକ୍ତିବିଦ୍ୟା)',
+    termsWebrtcDesc: 'ଏହି ୱେବସାଇଟ୍ ୱେବ୍-ଆରଟିସି ପିଅର୍-ଟୁ-ପିଅର୍ ପ୍ରଯୁକ୍ତିବିଦ୍ୟା ଦ୍ୱାରା କାର୍ଯ୍ୟ କରେ। ଅନଲାଇନ୍ କୋଠରି ଏବଂ ଲାଇଭ୍ ଦର୍ଶକ ସଂଯୋଗ ସିଧାସଳଖ ଗୋଟିଏ ଫୋନ୍ କିମ୍ବା କମ୍ପ୍ୟୁଟରରୁ ଅନ୍ୟ ଫୋନ୍ ସହିତ ଯୋଡ଼ି ହୁଏ। ଖେଳର ପ୍ରତ୍ୟେକ ଚାଲ ଏବଂ ପ୍ରତିକ୍ରିୟା ସିଧାସଳଖ ଖେଳାଳିମାନଙ୍କ ମଧ୍ୟରେ ଆଦାନପ୍ରଦାନ ହୁଏ ଏବଂ କୋଠରି ବନ୍ଦ ହେବା ମାତ୍ରେ ସମସ୍ତ ତଥ୍ୟ ଆପଣାଛାଏଁ ଲିଭିଯାଏ।',
+    termsLocalStorageTitle: '୩. କେବଳ ଆପଣଙ୍କ ଫୋନ୍ ରେ ସୁରକ୍ଷିତ ପସନ୍ଦ',
+    termsLocalStorageDesc: 'ଆପଣଙ୍କର ନାମ, ଭାଷା ପସନ୍ଦ, ଡାର୍କ କିମ୍ବା ଲାଇଟ୍ ମୋଡ୍ ଏବଂ ଧ୍ୱନି ସେଟିଙ୍ଗସ୍ କେବଳ ଆପଣଙ୍କ ନିଜ ଫୋନ୍ କିମ୍ବା ବ୍ରାଉଜର୍ ଭିତରେ ସୁରକ୍ଷିତ ରହେ, ଯାହାଦ୍ୱାରା ଆପଣଙ୍କୁ ବାରମ୍ବାର ନାମ ଲେଖିବାକୁ ପଡ଼ିବ ନାହିଁ।',
+    termsFairPlayTitle: '୪. ମାଗଣା ଖେଳ ଏବଂ ଲାଇଭ୍ କୋଠରି ନିୟମ',
+    termsFairPlayDesc: 'ଏହି ଖେଳ ସମସ୍ତଙ୍କ ପାଇଁ ସମ୍ପୂର୍ଣ୍ଣ ମାଗଣା ଅଟେ। ଯଦି କୌଣସି ଲାଇଭ୍ କୋଠରିରେ ୨ ମିନିଟ୍ ପର୍ଯ୍ୟନ୍ତ କୌଣସି ଚାଲ କିମ୍ବା ପ୍ରତିକ୍ରିୟା ନ ହୁଏ, ତେବେ ସେହି କୋଠରିଟି ଲାଇଭ୍ ତାଲିକାରୁ ଆପଣାଛାଏଁ ହଟିଯାଏ।',
+    moreAppsTitle: 'ଅଧିକ ଓଡ଼ିଆ ଆପ୍ ଡାଉନଲୋଡ୍ କରନ୍ତୁ',
+    moreAppsDesc: 'ସନ୍ଦୀପ ବିଶ୍ୱାଳ ଜି ଙ୍କ ଦ୍ୱାରା ନିର୍ମିତ ଅନ୍ୟାନ୍ୟ ଉପଯୋଗୀ ଓଡ଼ିଆ ଆପ୍ ଗୁଡ଼ିକ ଗୁଗଲ୍ ପ୍ଲେ ଷ୍ଟୋରରୁ ଡାଉନଲୋଡ୍ କରନ୍ତୁ।',
+    downloadMoreAppsBtn: 'ଅଧିକ ଆପ୍ ଡାଉନଲୋଡ୍ କରନ୍ତୁ',
+    leaveConfirmTitle: 'କୋଠରି ଛାଡ଼ିବେ କି?',
+    leaveConfirmDesc: 'ଆପଣ ନିଶ୍ଚିତ କି ଆପଣ ଏହି ଖେଳ ଛାଡ଼ି ହୋମ୍ ସ୍କ୍ରିନକୁ ଫେରିବାକୁ ଚାହୁଁଛନ୍ତି?',
+    leaveConfirmYes: 'ହଁ, କୋଠରି ଛାଡନ୍ତୁ',
+    leaveConfirmCancel: 'ନା, ଖେଳରେ ରୁହନ୍ତୁ',
+    menuLabel: 'ମେନୁ',
   },
 };
 

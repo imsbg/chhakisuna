@@ -130,26 +130,52 @@ test('getBestBotMove takes winning move or blocks opponent', () => {
   assert.ok([1, 3, 5, 7].includes(botDefenseMove), `Bot should pick an edge (1,3,5,7) to counter corner fork, got ${botDefenseMove}`);
 });
 
-import { detectLanguageFromUrl, getPathWithLang, buildUrlWithLang } from '../utils/urlLang.ts';
+import {
+  detectLanguageFromUrl,
+  detectPageFromUrl,
+  getPathWithLang,
+  buildUrlWithLang,
+  buildFriendSharePayload,
+} from '../utils/urlLang.ts';
 
-test('detectLanguageFromUrl and getPathWithLang handle /en and /odia URLs accurately', () => {
+test('detectLanguageFromUrl, detectPageFromUrl, and getPathWithLang handle /en, /odia, /en/terms, and /odia/terms accurately', () => {
   assert.equal(detectLanguageFromUrl('/en'), 'en');
   assert.equal(detectLanguageFromUrl('/en/'), 'en');
   assert.equal(detectLanguageFromUrl('/odia'), 'or');
   assert.equal(detectLanguageFromUrl('/odia/'), 'or');
+  assert.equal(detectLanguageFromUrl('/en/terms'), 'en');
+  assert.equal(detectLanguageFromUrl('/odia/terms'), 'or');
   assert.equal(detectLanguageFromUrl('/webrtc-tictactoe/en'), 'en');
   assert.equal(detectLanguageFromUrl('/webrtc-tictactoe/odia'), 'or');
   assert.equal(detectLanguageFromUrl('/'), null);
+
+  assert.equal(detectPageFromUrl('/odia/terms'), 'terms');
+  assert.equal(detectPageFromUrl('/en/terms/'), 'terms');
+  assert.equal(detectPageFromUrl('/odia'), 'home');
+  assert.equal(detectPageFromUrl('/en'), 'home');
 
   assert.equal(getPathWithLang('/', 'or'), '/odia');
   assert.equal(getPathWithLang('/', 'en'), '/en');
   assert.equal(getPathWithLang('/odia', 'en'), '/en');
   assert.equal(getPathWithLang('/en', 'or'), '/odia');
+  assert.equal(getPathWithLang('/odia', 'or', 'terms'), '/odia/terms');
+  assert.equal(getPathWithLang('/odia/terms', 'en'), '/en/terms');
+  assert.equal(getPathWithLang('/en/terms', 'or', 'home'), '/odia');
   assert.equal(getPathWithLang('/webrtc-tictactoe/', 'or'), '/webrtc-tictactoe/odia');
   assert.equal(getPathWithLang('/webrtc-tictactoe/odia', 'en'), '/webrtc-tictactoe/en');
 
   assert.equal(buildUrlWithLang('/odia', '?room=SB7A9K', '', 'en'), '/en?room=SB7A9K');
   assert.equal(buildUrlWithLang('/en', '?room=SB7A9K', '', 'or'), '/odia?room=SB7A9K');
+
+  const odiaShare = buildFriendSharePayload('or', 'SB1234', 'https://chhakisuna.netlify.app', '/odia');
+  assert.equal(odiaShare.url, 'https://chhakisuna.netlify.app/odia?room=SB1234');
+  assert.equal(odiaShare.fullMessage.includes('SB1234'), true);
+
+  const enShare = buildFriendSharePayload('en', null, 'https://chhakisuna.netlify.app', '/odia');
+  assert.equal(enShare.url, 'https://chhakisuna.netlify.app/en');
+  assert.equal(enShare.title.includes('Tic Tac Toe'), true);
+  assert.equal(enShare.fullMessage.includes('Chhaki Suna'), false);
 });
+
 
 

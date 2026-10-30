@@ -12,6 +12,9 @@ import {
   X,
   Radio,
   Swords,
+  Share2,
+  ShieldCheck,
+  ExternalLink,
 } from 'lucide-react';
 import { Translations } from '../utils/translations';
 import { generateRoomCode, isValidRoomCode, normalizeRoomCode } from '../game/rules';
@@ -25,6 +28,8 @@ interface RoomLobbyProps {
   onCreateRoom: (code: string, isPublicLive: boolean) => void;
   onJoinRoom: (code: string, role: 'guest' | 'spectator') => void;
   onStartSolo: (mode: 'pass' | 'bot', player2Name?: string) => void;
+  onOpenShareFriend: () => void;
+  onOpenTerms: () => void;
   t: Translations;
   isDarkMode: boolean;
 }
@@ -36,6 +41,8 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
   onCreateRoom,
   onJoinRoom,
   onStartSolo,
+  onOpenShareFriend,
+  onOpenTerms,
   t,
   isDarkMode,
 }) => {
@@ -118,7 +125,7 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
                 <span>{t.heroBadge}</span>
               </div>
 
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-normal py-0.5">
                 {t.appTitle}
               </h2>
               <p
@@ -199,6 +206,23 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
                   </p>
                 </button>
               </div>
+
+              {/* Share with a Friend Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  sounds.playClick();
+                  onOpenShareFriend();
+                }}
+                className={`w-full mt-2 py-2.5 px-4 rounded-2xl border font-bold text-xs flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                  isDarkMode
+                    ? 'bg-indigo-500/10 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/20'
+                    : 'bg-indigo-50 border-indigo-200 text-indigo-600 hover:bg-indigo-100'
+                }`}
+              >
+                <Share2 className="w-4 h-4" />
+                <span>{t.shareWithFriend}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -435,6 +459,32 @@ export const RoomLobby: React.FC<RoomLobbyProps> = ({
             })}
           </div>
         )}
+      </div>
+
+      {/* Footer Links: Terms & Conditions (/odia/terms or /en/terms) & More Apps */}
+      <div className="flex flex-wrap items-center justify-center gap-4 pt-1 text-xs font-semibold text-slate-400">
+        <button
+          type="button"
+          onClick={() => {
+            sounds.playClick();
+            onOpenTerms();
+          }}
+          className="inline-flex items-center gap-1.5 hover:text-indigo-400 transition-colors"
+        >
+          <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+          <span>{t.termsAndPrivacy}</span>
+        </button>
+        <span className="text-slate-700">•</span>
+        <a
+          href="https://play.google.com/store/apps/dev?id=6501689567504406715"
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => sounds.playClick()}
+          className="inline-flex items-center gap-1.5 hover:text-indigo-400 transition-colors"
+        >
+          <span>{t.downloadMoreAppsBtn}</span>
+          <ExternalLink className="w-3.5 h-3.5 text-indigo-400" />
+        </a>
       </div>
 
       {/* 2-Player Pass & Play Setup Modal (Prompts for Player 2 Name) */}

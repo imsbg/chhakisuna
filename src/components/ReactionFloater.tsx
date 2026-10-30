@@ -17,7 +17,7 @@ interface ReactionFloaterProps {
   isDarkMode: boolean;
 }
 
-export const REACTION_EMOJIS = ['👏', '🔥', '😮', '❤️', '🎉', '🏆', '💯'];
+export const REACTION_EMOJIS = ['👏', '🔥', '😂', '😭', '😮', '❤️', '🏆', '💯'];
 
 export const ReactionFloater: React.FC<ReactionFloaterProps> = ({
   onSendReaction,
@@ -46,20 +46,21 @@ export const ReactionFloater: React.FC<ReactionFloaterProps> = ({
       </div>
 
       {/* Cheerful reaction button bar */}
-      <div className="flex items-center justify-center gap-1.5 sm:gap-2 p-1.5 rounded-2xl border bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-md border-slate-200/80 dark:border-slate-800">
-        <span className="text-[11px] font-semibold text-slate-400 px-2 flex items-center gap-1 hidden sm:flex">
+      <div className="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5 p-1.5 rounded-2xl border bg-white/70 dark:bg-slate-900/70 backdrop-blur-md shadow-md border-slate-200/80 dark:border-slate-800 max-w-full">
+        <span className="text-[11px] font-semibold text-slate-400 px-2 items-center gap-1 hidden sm:flex">
           <Sparkles className="w-3 h-3 text-indigo-500" />
           {t.sendReaction}:
         </span>
         {REACTION_EMOJIS.map((emoji) => (
           <button
             key={emoji}
+            type="button"
             onClick={() => {
               sounds.playReaction();
               onSendReaction(emoji);
             }}
             aria-label={`Send reaction ${emoji}`}
-            className="p-1.5 sm:p-2 rounded-xl text-lg hover:scale-125 active:scale-95 transition-all duration-150 hover:bg-indigo-500/10"
+            className="p-1.5 sm:p-2 rounded-xl text-base sm:text-lg hover:scale-125 active:scale-95 transition-all duration-150 hover:bg-indigo-500/10"
           >
             {emoji}
           </button>
